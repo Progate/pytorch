@@ -3461,7 +3461,9 @@ class TestMaxAutotune(TestCase):
     @fresh_cache()
     @skipIfXpu
     @unittest.skipIf(TEST_WITH_ROCM, "Test requires CUDA")
-    @unittest.skipIf(not SM90OrLater, "Requires SM90+ (H100/B200) for sufficient GPU memory")
+    @unittest.skipIf(
+        not SM90OrLater, "Requires SM90+ (H100/B200) for sufficient GPU memory"
+    )
     @largeTensorTest("10 GB", device=GPU_TYPE)
     def test_max_autotune_mm_large_input_tensor_int64_indexing(self):
         """
@@ -3497,7 +3499,9 @@ class TestMaxAutotune(TestCase):
     @fresh_cache()
     @skipIfXpu
     @unittest.skipIf(TEST_WITH_ROCM, "Test requires CUDA")
-    @unittest.skipIf(not SM90OrLater, "Requires SM90+ (H100/B200) for sufficient GPU memory")
+    @unittest.skipIf(
+        not SM90OrLater, "Requires SM90+ (H100/B200) for sufficient GPU memory"
+    )
     @largeTensorTest("6 GB", device=GPU_TYPE)
     def test_max_autotune_grouped_mm_large_input_tensor_int64_indexing(self):
         def grouped_mm(a, b, offs):
@@ -3527,7 +3531,9 @@ class TestMaxAutotune(TestCase):
     @fresh_cache()
     @skipIfXpu
     @unittest.skipIf(TEST_WITH_ROCM, "Test requires CUDA")
-    @unittest.skipIf(not SM90OrLater, "Requires SM90+ (H100/B200) for sufficient GPU memory")
+    @unittest.skipIf(
+        not SM90OrLater, "Requires SM90+ (H100/B200) for sufficient GPU memory"
+    )
     @largeTensorTest("6 GB", device=GPU_TYPE)
     def test_max_autotune_grouped_mm_large_input_tensor_tma_disabled(self):
         # Grouped mm whose TMA descriptor max offset exceeds
@@ -3600,7 +3606,9 @@ class TestMaxAutotune(TestCase):
     @fresh_cache()
     @skipIfXpu
     @unittest.skipIf(TEST_WITH_ROCM, "Test requires CUDA")
-    @unittest.skipIf(not SM90OrLater, "Requires SM90+ (H100/B200) for sufficient GPU memory")
+    @unittest.skipIf(
+        not SM90OrLater, "Requires SM90+ (H100/B200) for sufficient GPU memory"
+    )
     @largeTensorTest("10 GB", device=GPU_TYPE)
     def test_max_autotune_mm_large_output_tensor_int32_overflow(self):
         """
@@ -3637,7 +3645,9 @@ class TestMaxAutotune(TestCase):
     @fresh_cache()
     @skipIfXpu
     @unittest.skipIf(TEST_WITH_ROCM, "Test requires CUDA")
-    @unittest.skipIf(not SM90OrLater, "Requires SM90+ (H100/B200) for sufficient GPU memory")
+    @unittest.skipIf(
+        not SM90OrLater, "Requires SM90+ (H100/B200) for sufficient GPU memory"
+    )
     @unittest.skipIf(
         has_datacenter_blackwell_tma_device(),
         "Hopper-style mm_persistent_tma template is shadowed by the Blackwell warp-specialized TMA template on data-center Blackwell.",
