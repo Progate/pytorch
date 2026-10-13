@@ -7149,8 +7149,7 @@ class TestSDPAXpuOnly(NNTestCase):
             k = k.contiguous()
             v = v.contiguous()
 
-        q2, k2, v2 = q.clone(), k.clone(), v.clone()
-        q2, k2, v2 = q2.float(), k2.float(), v2.float()
+        q2, k2, v2 = q.float(), k.float(), v.float()
 
         mask_shape = [batch_size, 1, q_size, kv_size]
         attn_mask = None

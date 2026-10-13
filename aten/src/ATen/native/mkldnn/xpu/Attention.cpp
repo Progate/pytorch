@@ -27,12 +27,15 @@ bool check_head_dim_size_xpu(sdp::sdp_params const& params, bool debug) {
     return false;
   }
 
-  if (!TORCH_GUARD_OR_FALSE(query_size_last.sym_gt(0))) {
+  if (!TORCH_GUARD_OR_FALSE(query_size_last.sym_gt(0)) ||
+      !TORCH_GUARD_OR_FALSE(value_size_last.sym_gt(0))) {
     if (debug) {
       TORCH_WARN(
-          "OneDNN attention requires q,k to have a non-zero head dimension.",
+          "OneDNN attention requires q,k,v to have a non-zero head dimension.",
           " Got Query.size(-1): ",
           query_size_last,
+          ", Value.size(-1): ",
+          value_size_last,
           " instead.");
     }
     return false;
@@ -73,7 +76,7 @@ bool check_grad(sdp::sdp_params const& params, bool debug) {
       params.attn_mask.has_value() && params.attn_mask.value().requires_grad();
   if (debug && attn_mask_needs_grad) {
     TORCH_WARN(
-        "scale_dot_product_attention on xpu is not supported when attn_mask.requires_grad() == True.");
+        "scaled_dot_product_attention on xpu is not supported when attn_mask.requires_grad() == True.");
   }
 
   return !attn_mask_needs_grad;
@@ -486,14 +489,15 @@ _scaled_dot_product_fused_attention_overrideable_backward_xpu(
       "scaled_dot_product_fused_attention_overrideable_backward_xpu: V should have the same head_dim as grad_out");
   TORCH_INTERNAL_ASSERT(
       logsumexp.dim() == 3 && logsumexp.size(0) == query.size(0) &&
-      logsumexp.size(1) == query.size(1) &&
-      logsumexp.size(2) == query.size(2) &&
+          logsumexp.size(1) == query.size(1) &&
+          logsumexp.size(2) == query.size(2),
       "scaled_dot_product_fused_attention_overrideable_backward_xpu: logsumexp should have the shape of {B, H, T}");
+  TORCH_CHECK(
+      !grad_input_mask[3],
+      "scaled_dot_product_fused_attention_overrideable_backward_xpu: grad for attn_bias is not supported");
 
-  std::optional<Tensor> attn_bias_opt;
-  if (attn_bias.defined()) {
-    attn_bias_opt = attn_bias;
-  }
+  std::optional<Tensor> attn_bias_opt =
+      attn_bias.defined() ? std::optional<Tensor>(attn_bias) : std::nullopt;
 
   const int64_t batch_size = query.size(0);
   const int64_t num_head_q = query.size(1);
@@ -506,9 +510,6 @@ _scaled_dot_product_fused_attention_overrideable_backward_xpu(
   auto grad_q = at::empty_like(query);
   auto grad_k = at::empty_like(key);
   auto grad_v = at::empty_like(value);
-  auto grad_attn_bias = attn_bias_opt.has_value()
-      ? at::empty_like(attn_bias_opt.value())
-      : at::Tensor();
   at::native::onednn::sdpa_backward(
       batch_size,
       num_head_q,
@@ -536,7 +537,7 @@ _scaled_dot_product_fused_attention_overrideable_backward_xpu(
       std::move(grad_q),
       std::move(grad_k),
       std::move(grad_v),
-      std::move(grad_attn_bias));
+      /* grad_attn_bias */ at::Tensor());
 }
 
 REGISTER_XPU_DISPATCH(_fused_sdp_choice_stub, &_fused_sdp_choice_xpu);
