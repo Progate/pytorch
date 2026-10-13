@@ -256,6 +256,7 @@ class CppWrapperCpuArrayRef(CppWrapperCpu):
                     f"thread_local RAIIAtenTensorHandle {cached_output_name};"
                 )
                 if is_constant_buffer:
+                    # See NOTE(arrayref_constant_output) in generate_return.
                     code.splice(
                         f"""
                         AtenTensorHandle {cached_output_name}_tmp;
@@ -709,6 +710,15 @@ class CppWrapperCpuArrayRef(CppWrapperCpu):
                         # assuming they are not updated at runtime Basically, we
                         # cannot release or transfer the ownership of any original
                         # constant to the user.
+                        #
+                        # NOTE(arrayref_constant_output): unlike the output_handles
+                        # path below, this copy must be a dense aoti_torch_clone, not
+                        # aoti_torch_clone_preserve_strides. The copy is wrapped in an
+                        # ArrayRefTensor, which carries its data as a flat buffer of
+                        # numel() elements, so a non-dense constant view has to be
+                        # compacted here. Constant-folding outputs never reach this
+                        # path: the const graph does not use the minimal arrayref
+                        # interface.
                         self.wrapper_call.writeline(
                             f"AtenTensorHandle {cached_output_name}_tmp;"
                         )
@@ -729,10 +739,12 @@ class CppWrapperCpuArrayRef(CppWrapperCpu):
                     )
                 else:
                     if is_constant_buffer:
-                        # See NOTE(return_constant) above.
+                        # See NOTE(return_constant) above. A constant-folding output
+                        # can be a non-dense view that kernels were compiled
+                        # against, so the clone must keep its strides.
                         self.wrapper_call.writeline(
                             "AOTI_TORCH_ERROR_CODE_CHECK("
-                            f"aoti_torch_clone({output}, &output_handles[{idx}]));"
+                            f"aoti_torch_clone_preserve_strides({output}, &output_handles[{idx}]));"
                         )
                     else:
                         if output in output2idx:

@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import torch
 from torch._inductor import config
+from torch._prims_common import is_non_overlapping_and_dense_or_false
 from torch._inductor.test_case import TestCase
 from torch._inductor.utils import run_and_get_cpp_code
 from torch.testing import FileCheck
@@ -167,6 +168,42 @@ class AOTInductorArrayRefTestsTemplate(AOTInductorTestsTemplate):
         ).check("ThreadLocalCachedOutput").check_regex(
             r"cached_output_\d+\{RAIIAtenTensorHandle\("
         ).run(code)
+
+    def test_minimal_arrayref_returns_dense_copy_of_non_dense_constant(self):
+        # NOTE(arrayref_constant_output): an ArrayRefTensor carries its data as a
+        # flat buffer, so a returned non-dense constant view is copied with a
+        # dense aoti_torch_clone rather than aoti_torch_clone_preserve_strides.
+        if not self.use_minimal_arrayref_interface:
+            self.skipTest("only the minimal arrayref interface wraps outputs")
+
+        class Model(torch.nn.Module):
+            def __init__(self, device):
+                super().__init__()
+                self.cst = torch.randn(8, 12, device=device)
+
+            def forward(self, x):
+                return (x + 1, self.cst[:, :6].t())
+
+        model = Model(self.device)
+        example_inputs = (torch.randn(5, device=self.device),)
+        with config.patch(
+            {
+                "aot_inductor.allow_stack_allocation": self.allow_stack_allocation,
+                "aot_inductor.use_minimal_arrayref_interface": self.use_minimal_arrayref_interface,
+            }
+        ):
+            actual, code = run_and_get_cpp_code(
+                AOTIRunnerUtil.run, model, example_inputs
+            )
+
+        expected = model(*example_inputs)
+        self.assertFalse(is_non_overlapping_and_dense_or_false(expected[1]))
+        self.assertEqual(actual[1], expected[1])
+        self.assertTrue(is_non_overlapping_and_dense_or_false(actual[1]))
+        FileCheck().check("thread_local RAIIAtenTensorHandle cached_output_").check(
+            "aoti_torch_clone("
+        ).run(code)
+        FileCheck().check_not("aoti_torch_clone_preserve_strides(").run(code)
 
     def test_simple_v2_interface(self):
         class Model(torch.nn.Module):
