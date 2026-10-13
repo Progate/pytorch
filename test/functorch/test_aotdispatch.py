@@ -13768,6 +13768,7 @@ class MockFXGraphCache:
         is_backward,
         constants,
         evaluate_guards,
+        fx_kwargs=None,
     ):
         gm = self.cache.get(key)
         if gm is not None:
