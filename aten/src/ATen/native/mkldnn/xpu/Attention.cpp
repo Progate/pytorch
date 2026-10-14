@@ -102,6 +102,7 @@ bool can_use_overrideable_attention(sdp::sdp_params const& params, bool debug) {
       std::to_array<bool (*)(sdp::sdp_params const&, bool)>(
           {sdp::check_nested_tensor,
            sdp::check_tensor_shapes,
+           sdp::check_for_dropout,
            sdp::check_batch_size_and_num_heads_dense<
                true /*supports GQA*/,
                true /*requires_same_num_heads*/,
