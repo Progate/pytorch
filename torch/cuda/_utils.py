@@ -1,4 +1,4 @@
-import ctypes
+from __future__ import annotations
 import sys
 from typing import Any, Optional, Union
 
@@ -9,7 +9,8 @@ from torch._utils import _get_device_index as _torch_get_device_index
 
 
 # Load CUDA driver and NVRTC
-def _get_cuda_library() -> ctypes.CDLL:
+def _get_cuda_library() -> "ctypes.CDLL":
+    import ctypes
     if sys.platform == "win32":
         return ctypes.CDLL("nvcuda.dll")
     else:  # Unix-based systems
@@ -18,6 +19,7 @@ def _get_cuda_library() -> ctypes.CDLL:
 
 # Helper: check CUDA errors
 def _check_cuda(result: int) -> None:
+    import ctypes
     if result == 0:
         return
     err_str = ctypes.c_char_p()
@@ -29,9 +31,10 @@ def _check_cuda(result: int) -> None:
     raise RuntimeError(f"CUDA error: {error_message}")
 
 
-def _get_nvrtc_library() -> ctypes.CDLL:
+def _get_nvrtc_library() -> "ctypes.CDLL":
     # Since PyTorch already loads NVRTC, we can use the system library
     # which should be compatible with PyTorch's version
+    import ctypes
     if sys.platform == "win32":
         return ctypes.CDLL("nvrtc64_120_0.dll")
     else:
@@ -61,6 +64,7 @@ def _nvrtc_compile(
     Returns:
         str: The compiled PTX code
     """
+    import ctypes
     # Ensure CUDA is initialized
     import torch.cuda
 
@@ -72,6 +76,7 @@ def _nvrtc_compile(
 
     # Helper: check NVRTC errors
     def check_nvrtc(result: int) -> None:
+        import ctypes
         if result != NVRTC_SUCCESS:
             err_str = ctypes.c_char_p()
             libnvrtc.nvrtcGetErrorString(result, ctypes.byref(err_str))
@@ -168,6 +173,7 @@ class _CudaModule:
         self._kernels: dict[str, _CudaKernel] = {}
 
     def __getattr__(self, name: str) -> "_CudaKernel":
+        import ctypes
         if name in self._kernels:
             return self._kernels[name]
 
@@ -219,6 +225,7 @@ class _CudaKernel:
             shared_mem (int): Shared memory size in bytes
             stream (torch.cuda.Stream): CUDA stream to use. If None, uses current stream.
         """
+        import ctypes
         import torch
 
         libcuda = torch.cuda._utils._get_cuda_library()
@@ -298,6 +305,7 @@ def _cuda_load_module(
         object: If kernel_names is None, returns a module object with __getattr__ to access kernels.
                If kernel_names is provided, returns a dict mapping kernel names to _CudaKernel objects.
     """
+    import ctypes
     # Ensure CUDA is initialized
     import torch.cuda
 

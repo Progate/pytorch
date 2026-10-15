@@ -1,7 +1,6 @@
 # mypy: allow-untyped-defs
 import abc
 import contextlib
-import ctypes
 import importlib
 import inspect
 import sys
@@ -46,6 +45,7 @@ def dl_open_guard():
     Context manager to set the RTLD_GLOBAL dynamic linker flag while we open a
     shared library to load custom operators.
     """
+    import ctypes
     if not _SET_GLOBAL_FLAGS:
         yield
         return
@@ -1467,6 +1467,7 @@ class _Ops(types.ModuleType):
         Args:
             path (str): A path to a shared library to load.
         """
+        import ctypes
         if torch._running_with_deploy():
             return
 

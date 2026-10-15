@@ -1,5 +1,4 @@
 # mypy: allow-untyped-defs
-import ctypes
 
 import torch
 from torch._utils import _dummy_type
@@ -103,6 +102,7 @@ class Stream(torch._C._CudaStreamBase):
 
     @property
     def _as_parameter_(self):
+        import ctypes
         return ctypes.c_void_p(self.cuda_stream)
 
     def __eq__(self, o) -> bool:
@@ -239,6 +239,7 @@ class Event(torch._C._CudaEventBase):
 
     @property
     def _as_parameter_(self):
+        import ctypes
         return ctypes.c_void_p(self.cuda_event)
 
     def __repr__(self) -> str:

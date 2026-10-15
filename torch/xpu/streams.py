@@ -1,5 +1,4 @@
 # mypy: allow-untyped-defs
-import ctypes
 
 import torch
 from torch._utils import _dummy_type
@@ -86,6 +85,7 @@ class Stream(torch._C._XpuStreamBase):
 
     @property
     def _as_parameter_(self):
+        import ctypes
         return ctypes.c_void_p(self.sycl_queue)
 
     def __eq__(self, o):
@@ -164,6 +164,7 @@ class Event(torch._C._XpuEventBase):
 
     @property
     def _as_parameter_(self):
+        import ctypes
         return ctypes.c_void_p(self.sycl_event)
 
     def __repr__(self):

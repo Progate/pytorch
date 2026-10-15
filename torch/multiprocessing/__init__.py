@@ -103,7 +103,8 @@ init_reductions()
 # Leak ResourceTracker at exit for Python-3.12 on MacOS
 # See https://github.com/pytorch/pytorch/issues/153050 and
 # https://github.com/python/cpython/issues/88887 for more details
-from multiprocessing.resource_tracker import ResourceTracker as _RT
+if sys.platform == "darwin":
+    from multiprocessing.resource_tracker import ResourceTracker as _RT
 
 
 if (

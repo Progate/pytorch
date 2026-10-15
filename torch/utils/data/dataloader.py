@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import functools
 import itertools
+import sys
 import logging
 import multiprocessing as python_multiprocessing
 import os
@@ -262,6 +263,8 @@ class DataLoader(Generic[_T_co]):
     ) -> None:
         torch._C._log_api_usage_once("python.data_loader")
 
+        if sys.platform == "wasi" and num_workers != 0:
+            raise ValueError("WASI DataLoader requires num_workers=0")
         if num_workers < 0:
             raise ValueError(
                 "num_workers option should be non-negative; "

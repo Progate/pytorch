@@ -28,7 +28,6 @@
 # map to the same (padded) storage.  We think this will be immaterial for most
 # users.
 
-import ctypes
 import functools
 import hashlib
 import os.path
@@ -93,6 +92,7 @@ def hash_storage_kernel(x):
 # SHA-1 if stable_hash=True, otherwise it will consistent for a single
 # process run but not necessarily across processes.
 def hash_storage(storage: torch.UntypedStorage, *, stable_hash: bool = False) -> str:
+    import ctypes
     import torch._dynamo
     from torch._dynamo.utils import is_compile_supported
 

@@ -4,7 +4,7 @@ import sys
 
 __all__ = ["register_after_fork"]
 
-if sys.platform == "win32":
+if sys.platform in ("win32", "wasi"):
     import multiprocessing.util as _util
 
     def _register(func):

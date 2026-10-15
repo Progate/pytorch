@@ -4,6 +4,7 @@ circular dependencies.
 """
 
 import functools
+import sys
 from typing import Callable, Literal, Optional, overload, TypeVar, Union
 from typing_extensions import ParamSpec
 
@@ -37,6 +38,8 @@ def _disable_dynamo(
     the invocation of the decorated function.
     """
     if fn is not None:
+        if sys.platform == "wasi":
+            return fn
 
         @functools.wraps(fn)
         def inner(*args: _P.args, **kwargs: _P.kwargs) -> _T:

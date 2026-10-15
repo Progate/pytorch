@@ -2,6 +2,7 @@
 """Base optimizer."""
 
 import functools
+import sys
 import warnings
 from collections import defaultdict, OrderedDict
 from collections.abc import Hashable, Iterable, Sequence
@@ -59,7 +60,8 @@ required = _RequiredParameter()
 
 def _use_grad_for_differentiable(func: Callable[_P, _T]) -> Callable[_P, _T]:
     def _use_grad(*args: _P.args, **kwargs: _P.kwargs) -> _T:
-        import torch._dynamo
+        if sys.platform != "wasi":
+            from torch import _dynamo
 
         self = cast(Optimizer, args[0])  # assume first positional arg is `self`
         prev_grad = torch.is_grad_enabled()
@@ -77,10 +79,12 @@ def _use_grad_for_differentiable(func: Callable[_P, _T]) -> Callable[_P, _T]:
             # graph break to allow the fully fused fwd-bwd-optimizer graph to be compiled.
             # see https://github.com/pytorch/pytorch/issues/104053
             torch.set_grad_enabled(self.defaults["differentiable"])
-            torch._dynamo.graph_break()
+            if sys.platform != "wasi":
+                _dynamo.graph_break()
             ret = func(*args, **kwargs)
         finally:
-            torch._dynamo.graph_break()
+            if sys.platform != "wasi":
+                _dynamo.graph_break()
             torch.set_grad_enabled(prev_grad)
         return ret
 

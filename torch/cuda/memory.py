@@ -3,7 +3,6 @@ r"""This package adds support for device memory management implemented in CUDA."
 
 import collections
 import contextlib
-import ctypes
 import pickle
 import sys
 import warnings
@@ -1119,6 +1118,7 @@ class CUDAPluggableAllocator(_CUDAAllocator):
         .. note::
             See :ref:`cuda-memory-management` for details on creating and using a custom allocator
         """
+        import ctypes
         allocator = ctypes.CDLL(path_to_so_file)
         alloc_fn = ctypes.cast(getattr(allocator, alloc_fn_name), ctypes.c_void_p).value
         free_fn = ctypes.cast(getattr(allocator, free_fn_name), ctypes.c_void_p).value
