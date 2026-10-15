@@ -36,6 +36,10 @@ SYMPY_FACTOR_MAX_FREE_SYMBOLS = 50
 # before optimization_hint skips expensive SymPy subs() canonicalization.
 SYMPY_SUBS_MAX_SYMBOL_REPLACEMENT_PRODUCT = 1024
 
+# Inside consistent_hints, equal shares of an Eq's slack are rounded down to a
+# multiple of this, so the parts keep common alignments.
+_FAIR_SHARE_ALIGNMENT = 8
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
@@ -445,7 +449,7 @@ def consistent_hints(state: ConsistentHintState) -> Iterator[None]:
 
 def _implied_linear_bound(
     shape_env: ShapeEnv, g: sympy.Expr, s: sympy.Symbol
-) -> tuple[int, int] | None:
+) -> tuple[int, int, int] | None:
     """Rewrite the runtime assert ``g <= 0`` as ``c*s + k <= 0``, where s is
     the symbol being bounded, by replacing every other symbol t in g with a
     number: the end of t's range that gives s the most room (t's minimum if its
@@ -457,11 +461,13 @@ def _implied_linear_bound(
     assert (g <= 0) for some t also satisfies ``c*s + k <= 0``. It is also
     exact for a single assert, since t at that end is itself a valid choice.
 
-    Returns None if g is not linear with integer coefficients or a needed range
-    end is infinite.
+    Also returns n, the number of other symbols with a positive coefficient,
+    which share the bound with s (b in the example above). Returns None if g is
+    not linear with integer coefficients or a needed range end is infinite.
     """
     c = 0
     k = 0
+    n = 0
     for term, coeff in sympy.expand(g).as_coefficients_dict().items():
         if not coeff.is_Integer:
             return None
@@ -478,9 +484,11 @@ def _implied_linear_bound(
             if not isinstance(bound, (int, sympy.Integer)):
                 return None
             k += coeff * int(bound)
+            if coeff > 0:
+                n += 1
         else:
             return None
-    return c, k
+    return c, k, n
 
 
 def _unbacked_hint_bounds_from_runtime_asserts(
@@ -555,11 +563,12 @@ def _unbacked_hint_bounds_from_runtime_asserts(
                 relations = [(ax.lhs - ax.rhs, False), (ax.rhs - ax.lhs, False)]
             else:
                 continue
+            is_eq = isinstance(ax, sympy.Equality)
             for g, strict in relations:
                 linear = _implied_linear_bound(shape_env, g, s)
                 if linear is None:
                     continue
-                c, k = linear
+                c, k, n_peers = linear
                 if c == 0:
                     continue
                 thr = sympy.Rational(-k, c)  # c*s + k (<|<=) 0  ->  s (<|<=) thr, c>0
@@ -567,6 +576,24 @@ def _unbacked_hint_bounds_from_runtime_asserts(
                     bnd = (
                         int(sympy.ceiling(thr) - 1) if strict else int(sympy.floor(thr))
                     )
+                    if state is not None and is_eq and n_peers > 0:
+                        # The parts of an Eq share a fixed budget. Leave each
+                        # still-unknown part an equal share of the slack,
+                        # rounded down to a multiple of _FAIR_SHARE_ALIGNMENT
+                        # so common alignment checks (% 8) still hold; the last
+                        # part takes the remainder. E.g. Eq(u0 + u1 + u2 + u3,
+                        # 100) gives 24, 24, 24, 28 instead of 100 for the first
+                        # part hinted and 0 for the rest.
+                        vr = shape_env.var_to_range.get(s)
+                        s_min = (
+                            int(vr.lower)
+                            if vr is not None
+                            and isinstance(vr.lower, (int, sympy.Integer))
+                            else 0
+                        )
+                        share = s_min + max(0, bnd - s_min) // (n_peers + 1)
+                        aligned = share - share % _FAIR_SHARE_ALIGNMENT
+                        bnd = aligned if aligned >= max(s_min, 1) else share
                     upper = bnd if upper is None else min(upper, bnd)
                 else:  # dividing by c<0 flips the inequality: s (>|>=) thr
                     bnd = (

@@ -6105,6 +6105,25 @@ def forward(self, arg0_1: "i64[1][1]cpu", arg1_1: "Sym(u1)", arg2_1: "i64[u1][1]
                     }
                 self.assertTrue(all(v >= 1 for v in hints.values()), hints)
                 self.assertEqual(sum(hints.values()), 100, hints)
+                if fallback >= 24:
+                    # The slack is split evenly in multiples of 8, whatever the
+                    # hint order; the last part takes the remainder.
+                    self.assertEqual(list(hints.values()), [24, 24, 24, 28], hints)
+
+    def test_consistent_hints_eq_split_evenly(self):
+        # Inside the context the parts of an Eq split its slack evenly, in
+        # multiples of 8; the last part absorbs the remainder. Outside the context each part is hinted
+        # on its own; checking the Eq last narrowed each range to [0, 100].
+        shape_env, syms = self._make_unbacked_symints(3)
+        torch._check(sum(syms) == 100)
+        sizevars = SizeVarAllocator(shape_env)
+        u0, u1, u2 = (u.node.expr for u in syms)
+        self.assertEqual(sizevars.optimization_hint(u0), 100)
+        state = ConsistentHintState(shape_env)
+        with consistent_hints(state):
+            hints = [sizevars.optimization_hint(u) for u in (u0, u1, u2)]
+        self.assertEqual(hints, [32, 32, 36])
+        self.assertEqual(sizevars.optimization_hint(u0), 100)
 
     def test_consistent_hints_eq_product(self):
         # Per-symbol bounds skip the non-linear Eq, but the existing Eq
