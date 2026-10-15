@@ -20,7 +20,7 @@ if(NOT TORCH_INSTALL_LIB_DIR)
   set(TORCH_INSTALL_LIB_DIR lib)
 endif()
 
-if(MSVC)
+if(MSVC OR CMAKE_SYSTEM_NAME STREQUAL "WASI")
     set(LIBSHM_SUBDIR libshm_windows)
 else()
     set(LIBSHM_SUBDIR libshm)
@@ -313,7 +313,11 @@ if(USE_COREML_DELEGATE)
 endif()
 
 
-add_library(torch_python SHARED ${TORCH_PYTHON_SRCS})
+if(CMAKE_SYSTEM_NAME STREQUAL "WASI")
+  add_library(torch_python STATIC ${TORCH_PYTHON_SRCS})
+else()
+  add_library(torch_python SHARED ${TORCH_PYTHON_SRCS})
+endif()
 torch_compile_options(torch_python)  # see cmake/public/utils.cmake
 if(APPLE)
   target_compile_options(torch_python PRIVATE

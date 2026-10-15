@@ -4,7 +4,9 @@
 
 #ifdef __cplusplus
 
-#ifdef SHM_EXPORTS
+#ifdef __wasi__
+#define SHM_API
+#elif defined(SHM_EXPORTS)
 #define SHM_API __declspec(dllexport)
 #else
 #define SHM_API __declspec(dllimport)

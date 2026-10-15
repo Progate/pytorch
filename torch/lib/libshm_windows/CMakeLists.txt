@@ -3,7 +3,11 @@ if(NOT LIBSHM_INSTALL_LIB_SUBDIR)
   set(LIBSHM_INSTALL_LIB_SUBDIR "lib" CACHE PATH "libshm install library directory")
 endif()
 
-add_library(shm SHARED core.cpp)
+if(CMAKE_SYSTEM_NAME STREQUAL "WASI")
+  add_library(shm STATIC core.cpp)
+else()
+  add_library(shm SHARED core.cpp)
+endif()
 
 target_compile_definitions(shm PRIVATE
   "_CRT_SECURE_NO_DEPRECATE=1"
