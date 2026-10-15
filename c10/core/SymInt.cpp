@@ -274,7 +274,7 @@ DEFINE_SYMINT_OP(uint32_t, SymInt)
 DEFINE_SYMINT_OP(double, SymFloat)
 DEFINE_SYMINT_OP(float, SymFloat) // just for completeness
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || (defined(__wasi__) && __SIZEOF_SIZE_T__ == 4)
 DEFINE_SYMINT_OP_INTONLY(size_t, SymInt) // needed for osx
 DEFINE_SYMINT_OP(size_t, SymInt) // needed for osx
 #endif

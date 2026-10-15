@@ -17,7 +17,7 @@
 #include <torch/csrc/utils/pybind.h>
 #include <torch/csrc/utils/pycfunction_helpers.h>
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__wasi__)
 #include <pthread.h>
 #endif
 
@@ -509,7 +509,7 @@ static void child_atfork() {
 }
 
 bool THPEngine_initModule(PyObject* module) {
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__wasi__)
   if (pthread_atfork(nullptr, nullptr, child_atfork) != 0) {
     throw std::runtime_error("unable to set pthread_atfork handler");
   }

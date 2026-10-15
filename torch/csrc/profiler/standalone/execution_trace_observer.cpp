@@ -9,6 +9,7 @@
 #include <unistd.h>
 #endif // _WIN32
 
+#include <cstdlib>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <chrono>

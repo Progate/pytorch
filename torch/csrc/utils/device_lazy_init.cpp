@@ -6,7 +6,7 @@
 #include <torch/csrc/python_headers.h>
 #include <torch/csrc/utils/object_ptr.h>
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__wasi__)
 #include <pthread.h>
 #endif
 
@@ -77,7 +77,7 @@ void set_device_in_bad_fork(at::DeviceType device_type, bool value) {
 
 // Should be called before the first device runtime call.
 void register_fork_handler_for_device_init(at::DeviceType device_type) {
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__wasi__)
   auto& flag = at_fork_once_flags[static_cast<int>(device_type)];
   c10::call_once(flag, [device_type]() {
     static at::DeviceType at_fork_device_type = device_type;

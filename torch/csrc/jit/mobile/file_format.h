@@ -12,7 +12,7 @@
 #include <c10/core/impl/alloc_cpu.h>
 #include <caffe2/serialize/read_adapter_interface.h>
 
-#if defined(HAVE_MMAP)
+#if defined(HAVE_MMAP) && !defined(__wasi__)
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -128,7 +128,7 @@ static void file_not_found_error() {
 // NOLINTNEXTLINE(facebook-hte-NamespaceScopedStaticDeclaration)
 static inline std::tuple<std::shared_ptr<char>, size_t> get_file_content(
     const char* filename) {
-#if defined(HAVE_MMAP)
+#if defined(HAVE_MMAP) && !defined(__wasi__)
   int fd = open(filename, O_RDONLY);
   if (fd < 0) {
     // failed to open file, chances are it's no such file or directory.

@@ -564,6 +564,14 @@ RefcountedMapAllocator::RefcountedMapAllocator(WithFd, const char *filename, int
   TORCH_CHECK(false, "refcounted file mapping not supported on your system");
 }
 
+void RefcountedMapAllocator::incref() {
+  TORCH_CHECK(false, "refcounted file mapping not supported on your system");
+}
+
+int RefcountedMapAllocator::decref() {
+  TORCH_CHECK(false, "refcounted file mapping not supported on your system");
+}
+
 void RefcountedMapAllocator::initializeAlloc() {}
 
 void RefcountedMapAllocator::close() {}

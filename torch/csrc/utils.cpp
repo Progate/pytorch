@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <fmt/core.h>
 #include <torch/csrc/DynamicTypes.h>
 #include <torch/csrc/THP.h>

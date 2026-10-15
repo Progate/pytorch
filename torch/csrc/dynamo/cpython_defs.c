@@ -5,11 +5,15 @@
 #if IS_PYTHON_3_11_PLUS
 
 #define Py_BUILD_CORE
+#ifndef __wasi__
 #define NEED_OPCODE_TABLES // To get _PyOpcode_Deopt, _PyOpcode_Caches
+#endif
 
 #if IS_PYTHON_3_13_PLUS
 #include <cpython/code.h> // To get PyUnstable_Code_GetFirstFree
+#ifndef __wasi__
 #define NEED_OPCODE_METADATA
+#endif
 #include <internal/pycore_opcode_metadata.h>
 #undef NEED_OPCODE_METADATA
 #else

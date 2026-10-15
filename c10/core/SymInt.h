@@ -361,7 +361,7 @@ DECLARE_SYMINT_OP(float, SymFloat) // just for completeness
 
 // On OSX size_t is different than uint64_t so we have to
 // define it separately
-#if defined(__APPLE__)
+#if defined(__APPLE__) || (defined(__wasi__) && __SIZEOF_SIZE_T__ == 4)
 DECLARE_SYMINT_OP_INTONLY(size_t, SymInt)
 DECLARE_SYMINT_OP(size_t, SymInt)
 #endif

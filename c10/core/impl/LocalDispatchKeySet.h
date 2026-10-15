@@ -62,7 +62,9 @@ struct C10_API LocalDispatchKeySet {
 
 // thread_local variables cannot be C10_API on Windows.
 // Inlining this seems to break AutoDispatchBelowAutograd on Android.
-#if defined(_MSC_VER) || defined(C10_ANDROID) || defined(C10_IPHONE)
+// wasm の動的リンクでは、別の .so の thread_local を直に読めない（読む側が自分の TLS 領域で引いてしまう）。
+// Windows と同じく、定義した libc10 の関数を通す
+#if defined(_MSC_VER) || defined(C10_ANDROID) || defined(C10_IPHONE) || defined(__wasi__)
 C10_API LocalDispatchKeySet tls_local_dispatch_key_set();
 #else // defined(_MSC_VER) || defined(C10_ANDROID) || defined(C10_IPHONE)
 extern C10_API thread_local PODLocalDispatchKeySet raw_local_dispatch_key_set;

@@ -330,7 +330,7 @@ constexpr uint32_t CUDA_THREADS_PER_BLOCK_FALLBACK = 256;
 #define CUDA_KERNEL_ASSERT_MSG(cond, msg)
 #define SYCL_KERNEL_ASSERT(cond)
 #elif defined(_MSC_VER)
-#if defined(NDEBUG)
+#if defined(NDEBUG) && !defined(__wasi__)
 extern "C" {
 C10_IMPORT
 #if defined(__SYCL_DEVICE_ONLY__)
@@ -374,7 +374,7 @@ __host__ __device__
            0);                                   \
   }
 #else // __APPLE__, _MSC_VER
-#if defined(NDEBUG)
+#if defined(NDEBUG) && !defined(__wasi__)
 extern "C" {
 #if defined(__SYCL_DEVICE_ONLY__)
 extern SYCL_EXTERNAL void __assert_fail(

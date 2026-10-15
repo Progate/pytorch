@@ -11,7 +11,7 @@
 // calls, and SIGCHLD handler. Currently, dummy implementations are provided
 // for Windows.
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__wasi__)
 
 #include <torch/csrc/Exceptions.h>
 #include <torch/csrc/utils/python_numbers.h>

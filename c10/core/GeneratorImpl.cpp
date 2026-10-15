@@ -1,5 +1,8 @@
 #include <c10/core/GeneratorImpl.h>
 #include <random>
+#if defined(__wasi__)
+#include <wasi/api.h>
+#endif
 
 #if defined(__SGX_ENABLED__)
 #include <sgx_trts.h>
@@ -92,6 +95,8 @@ uint64_t getNonDeterministicRandom(bool is_cuda) {
   if (!is_cuda) {
 #ifdef _WIN32
     s = (uint64_t)std::chrono::steady_clock::now().time_since_epoch().count();
+#elif defined(__wasi__)
+    TORCH_CHECK(__wasi_random_get(reinterpret_cast<uint8_t*>(&s), sizeof(s)) == 0, "WASI random_get failed");
 #elif defined(__SGX_ENABLED__)
     TORCH_CHECK(
         sgx_read_rand(reinterpret_cast<uint8_t*>(&s), sizeof(s)) == SGX_SUCCESS,
