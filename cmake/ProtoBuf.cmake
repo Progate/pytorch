@@ -58,7 +58,7 @@ macro(custom_protobuf_find)
     # There is link error when cross compiling protoc on mobile:
     # https://github.com/protocolbuffers/protobuf/issues/2719
     # And protoc is very unlikely needed for mobile builds.
-    if(CMAKE_SYSTEM_NAME STREQUAL "WASI")
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "wasm32")
       # protoc built for WASI cannot run on the build machine; use the host protoc given for the custom protoc
       if(NOT EXISTS "${CAFFE2_CUSTOM_PROTOC_EXECUTABLE}")
         message(FATAL_ERROR "CAFFE2_CUSTOM_PROTOC_EXECUTABLE must point to a protoc that runs on the build machine")
