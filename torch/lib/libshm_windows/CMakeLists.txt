@@ -3,7 +3,7 @@ if(NOT LIBSHM_INSTALL_LIB_SUBDIR)
   set(LIBSHM_INSTALL_LIB_SUBDIR "lib" CACHE PATH "libshm install library directory")
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "WASI")
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "wasm32")
   add_library(shm STATIC core.cpp)
 else()
   add_library(shm SHARED core.cpp)
