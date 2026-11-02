@@ -20,7 +20,7 @@ if(NOT TORCH_INSTALL_LIB_DIR)
   set(TORCH_INSTALL_LIB_DIR lib)
 endif()
 
-if(MSVC OR CMAKE_SYSTEM_NAME STREQUAL "WASI")
+if(MSVC OR CMAKE_SYSTEM_PROCESSOR STREQUAL "wasm32")
     set(LIBSHM_SUBDIR libshm_windows)
 else()
     set(LIBSHM_SUBDIR libshm)
@@ -313,7 +313,7 @@ if(USE_COREML_DELEGATE)
 endif()
 
 
-if(CMAKE_SYSTEM_NAME STREQUAL "WASI")
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "wasm32")
   add_library(torch_python STATIC ${TORCH_PYTHON_SRCS})
 else()
   add_library(torch_python SHARED ${TORCH_PYTHON_SRCS})

@@ -1,6 +1,6 @@
 #include <c10/core/GeneratorImpl.h>
 #include <random>
-#if defined(__wasi__)
+#if defined(__wasm__)
 #include <cerrno>
 #include <cstring>
 #endif
@@ -96,7 +96,7 @@ uint64_t getNonDeterministicRandom(bool is_cuda) {
   if (!is_cuda) {
 #ifdef _WIN32
     s = (uint64_t)std::chrono::steady_clock::now().time_since_epoch().count();
-#elif defined(__wasi__)
+#elif defined(__wasm__)
     TORCH_CHECK(
         getentropy(&s, sizeof(s)) == 0,
         "getentropy failed: ",
