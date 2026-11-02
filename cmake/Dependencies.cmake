@@ -1586,6 +1586,12 @@ endif()
 set(TEMP_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libs" FORCE)
 add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/fmt)
+# fmt 11.2 の format.h は malloc と free を <cstdlib> を読まずに使っている（上流の 12.0 で <cstdlib> を足して直った）。
+# wasm32 の linux-musl の libc++ は <new> や <string> から <cstdlib> を辿らないので、fmt 自身のソース（format.cc・os.cc）が
+# 宣言の無い malloc で組めない。上流の直しと同じく、fmt を組むときだけ <cstdlib> を先に読ませる
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "wasm32")
+  target_compile_options(fmt PRIVATE "SHELL:-include cstdlib")
+endif()
 
 # Disable compiler feature checks for `fmt`.
 #
