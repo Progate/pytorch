@@ -19,7 +19,11 @@ import math
 import os
 import platform
 import sys
-if sys.platform != "wasi":
+import sysconfig
+
+# BrowserOS (Linux on WebAssembly) reports sys.platform == "linux"; detect it by the sysconfig platform tag
+_IS_BROWSEROS = sysconfig.get_platform().startswith("browseros-")
+if not _IS_BROWSEROS:
     import ctypes
 import textwrap
 import threading
@@ -308,7 +312,7 @@ def _preload_cuda_deps(lib_folder: str, lib_name: str) -> None:
 
 # See Note [Global dependencies]
 def _load_global_deps() -> None:
-    if _running_with_deploy() or platform.system() == "Windows" or sys.platform == "wasi":
+    if _running_with_deploy() or platform.system() == "Windows" or _IS_BROWSEROS:
         return
 
     # Determine the file extension based on the platform
@@ -412,7 +416,7 @@ else:
     # want USE_RTLD_GLOBAL_WITH_LIBTORCH = False and USE_GLOBAL_DEPS = False
     #
     # See Note [Global dependencies]
-    if USE_GLOBAL_DEPS and sys.platform != "wasi":
+    if USE_GLOBAL_DEPS and not _IS_BROWSEROS:
         _load_global_deps()
     from torch._C import *  # noqa: F403
 
@@ -1643,8 +1647,8 @@ def _check_with(
     if not isinstance(cond, (builtins.bool, SymBool)):
         raise TypeError(f"cond must be a bool, but got {type(cond)}")
 
-    # WASI eager tensors have concrete shapes; keep symbolic dependencies lazy.
-    if sys.platform == "wasi" and isinstance(cond, builtins.bool):
+    # BrowserOS eager tensors have concrete shapes; keep symbolic dependencies lazy.
+    if _IS_BROWSEROS and isinstance(cond, builtins.bool):
         if cond:
             return
     else:
@@ -2082,7 +2086,7 @@ from torch.serialization import load, save
 
 # Shared memory manager needs to know the exact location of manager executable
 def _manager_path():
-    if _running_with_deploy() or platform.system() == "Windows" or sys.platform == "wasi":
+    if _running_with_deploy() or platform.system() == "Windows" or _IS_BROWSEROS:
         return b""
     path = get_file_path("torch", "bin", "torch_shm_manager")
     prepare_multiprocessing_environment(get_file_path("torch"))
@@ -2577,8 +2581,8 @@ def compile(
             return torch.sin(x) + torch.cos(x)
 
     """
-    if sys.platform == "wasi":
-        raise RuntimeError("torch.compile is unavailable on WASI; use eager execution")
+    if _IS_BROWSEROS:
+        raise RuntimeError("torch.compile is unavailable on BrowserOS; use eager execution")
     import sysconfig
 
     _C._log_api_usage_once("torch.compile")

@@ -1,10 +1,14 @@
 # mypy: allow-untyped-defs
 import sys
+import sysconfig
+
+# BrowserOS (Linux on WebAssembly) reports sys.platform == "linux"; detect it by the sysconfig platform tag
+_IS_BROWSEROS = sysconfig.get_platform().startswith("browseros-")
 
 
 __all__ = ["register_after_fork"]
 
-if sys.platform in ("win32", "wasi"):
+if sys.platform == "win32" or _IS_BROWSEROS:
     import multiprocessing.util as _util
 
     def _register(func):

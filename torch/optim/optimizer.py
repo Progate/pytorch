@@ -3,6 +3,10 @@
 
 import functools
 import sys
+import sysconfig
+
+# BrowserOS (Linux on WebAssembly) reports sys.platform == "linux"; detect it by the sysconfig platform tag
+_IS_BROWSEROS = sysconfig.get_platform().startswith("browseros-")
 import warnings
 from collections import defaultdict, OrderedDict
 from collections.abc import Hashable, Iterable, Sequence
@@ -60,7 +64,7 @@ required = _RequiredParameter()
 
 def _use_grad_for_differentiable(func: Callable[_P, _T]) -> Callable[_P, _T]:
     def _use_grad(*args: _P.args, **kwargs: _P.kwargs) -> _T:
-        if sys.platform != "wasi":
+        if not _IS_BROWSEROS:
             from torch import _dynamo
 
         self = cast(Optimizer, args[0])  # assume first positional arg is `self`
@@ -79,11 +83,11 @@ def _use_grad_for_differentiable(func: Callable[_P, _T]) -> Callable[_P, _T]:
             # graph break to allow the fully fused fwd-bwd-optimizer graph to be compiled.
             # see https://github.com/pytorch/pytorch/issues/104053
             torch.set_grad_enabled(self.defaults["differentiable"])
-            if sys.platform != "wasi":
+            if not _IS_BROWSEROS:
                 _dynamo.graph_break()
             ret = func(*args, **kwargs)
         finally:
-            if sys.platform != "wasi":
+            if not _IS_BROWSEROS:
                 _dynamo.graph_break()
             torch.set_grad_enabled(prev_grad)
         return ret
