@@ -61,8 +61,8 @@ struct TempFile {
   AT_DISALLOW_COPY_AND_ASSIGN(TempFile);
 
   TempFile(const std::string& t, int suffix) {
-#ifdef __wasi__
-    TORCH_CHECK(false, "CPU JIT compilation is unavailable in WASI");
+#ifdef __wasm__
+    TORCH_CHECK(false, "CPU JIT compilation is unavailable on wasm");
 #elif defined(_MSC_VER)
     auto wt = c10::u8u16(t);
     std::vector<wchar_t> tt(wt.c_str(), wt.c_str() + wt.size() + 1);

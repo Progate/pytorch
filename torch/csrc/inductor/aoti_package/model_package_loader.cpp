@@ -45,7 +45,7 @@ bool file_exists(const std::string& path) {
 }
 
 std::string create_temp_dir() {
-#if defined(_WIN32) || defined(__wasi__)
+#if defined(_WIN32) || defined(__wasm__)
   throw std::runtime_error("Not implemented");
 #else
   std::string temp_dir = "/tmp/XXXXXX";

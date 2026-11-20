@@ -33,6 +33,12 @@ macro(custom_protobuf_find)
   set(__caffe2_CMAKE_POSITION_INDEPENDENT_CODE ${CMAKE_POSITION_INDEPENDENT_CODE})
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+  # wasm32 ではビルドマシンの protoc を使う（下の CAFFE2_CUSTOM_PROTOC_EXECUTABLE）ので、wasm の protoc と libprotoc は組まない。
+  # 組もうとすると、wasm は ELF ではないので protoc の install の RPATH の書き換えを Ninja で扱えず CMake の構成で止まる
+  if(CMAKE_SYSTEM_PROCESSOR STREQUAL "wasm32")
+    set(protobuf_BUILD_PROTOC_BINARIES OFF CACHE BOOL "" FORCE)
+  endif()
+
   if(CMAKE_VERSION VERSION_GREATER_EQUAL "4.0.0")
     message(WARNING "Ancient protobuf forces CMake compatibility")
     set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
@@ -58,8 +64,8 @@ macro(custom_protobuf_find)
     # There is link error when cross compiling protoc on mobile:
     # https://github.com/protocolbuffers/protobuf/issues/2719
     # And protoc is very unlikely needed for mobile builds.
-    if(CMAKE_SYSTEM_NAME STREQUAL "WASI")
-      # protoc built for WASI cannot run on the build machine; use the host protoc given for the custom protoc
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "wasm32")
+      # protoc built for wasm cannot run on the build machine; use the host protoc given for the custom protoc
       if(NOT EXISTS "${CAFFE2_CUSTOM_PROTOC_EXECUTABLE}")
         message(FATAL_ERROR "CAFFE2_CUSTOM_PROTOC_EXECUTABLE must point to a protoc that runs on the build machine")
       endif()
