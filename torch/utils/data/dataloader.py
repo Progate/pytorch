@@ -10,6 +10,10 @@ from __future__ import annotations
 import functools
 import itertools
 import sys
+import sysconfig
+
+# BrowserOS (Linux on WebAssembly) reports sys.platform == "linux"; detect it by the sysconfig platform tag
+_IS_BROWSEROS = sysconfig.get_platform().startswith("browseros-")
 import logging
 import multiprocessing as python_multiprocessing
 import os
@@ -263,8 +267,8 @@ class DataLoader(Generic[_T_co]):
     ) -> None:
         torch._C._log_api_usage_once("python.data_loader")
 
-        if sys.platform == "wasi" and num_workers != 0:
-            raise ValueError("WASI DataLoader requires num_workers=0")
+        if _IS_BROWSEROS and num_workers != 0:
+            raise ValueError("DataLoader on BrowserOS requires num_workers=0")
         if num_workers < 0:
             raise ValueError(
                 "num_workers option should be non-negative; "

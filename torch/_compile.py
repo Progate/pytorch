@@ -5,6 +5,10 @@ circular dependencies.
 
 import functools
 import sys
+import sysconfig
+
+# BrowserOS (Linux on WebAssembly) reports sys.platform == "linux"; detect it by the sysconfig platform tag
+_IS_BROWSEROS = sysconfig.get_platform().startswith("browseros-")
 from typing import Callable, Literal, Optional, overload, TypeVar, Union
 from typing_extensions import ParamSpec
 
@@ -38,7 +42,7 @@ def _disable_dynamo(
     the invocation of the decorated function.
     """
     if fn is not None:
-        if sys.platform == "wasi":
+        if _IS_BROWSEROS:
             return fn
 
         @functools.wraps(fn)
